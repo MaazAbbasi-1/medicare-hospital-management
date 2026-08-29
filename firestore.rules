@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function role(name) {
+      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == name;
+    }
+    function admin() { return role('admin'); }
+    function doctor() { return role('doctor'); }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || admin());
+      allow create: if signedIn() && request.auth.uid == userId && request.resource.data.role == 'patient';
+      allow update: if signedIn() && (request.auth.uid == userId || admin());
+      allow delete: if admin();
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if signedIn();
+      allow create, update: if admin() || (doctor() && request.resource.data.userId == request.auth.uid);
+      allow delete: if admin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if admin() ||
+        (signedIn() && resource.data.patientId == request.auth.uid) ||
+        (doctor() && (resource.data.doctorId == request.auth.uid ||
+          resource.data.doctorName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name));
+      allow create: if signedIn() && request.resource.data.patientId == request.auth.uid;
+      allow update: if admin() ||
+        (doctor() && resource.data.doctorId == request.auth.uid) ||
+        (signedIn() && resource.data.patientId == request.auth.uid);
+      allow delete: if admin() || (signedIn() && resource.data.patientId == request.auth.uid);
+    }
+
+    match /specialties/{specialtyId} {
+      allow read: if signedIn();
+      allow write: if admin();
+    }
+  }
+}
