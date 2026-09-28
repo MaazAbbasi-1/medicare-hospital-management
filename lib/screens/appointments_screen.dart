@@ -405,7 +405,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     _passRow('Reason / Symptoms', app.problem),
                   ],
                   Divider(color: AppTheme.divider, height: 20),
-                  _passRow('Clinic Ward', 'OPD Block A - Counter 4', isHighlight: true),
+                  _passRow('Clinic Ward', 'MediCare Central Hospital, Islamabad - OPD Block A - Counter 4', isHighlight: true),
                 ],
               ),
             ),
@@ -883,6 +883,55 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     ],
                   ),
                 ],
+
+                if (app.diagnosis.isNotEmpty ||
+                  app.medications.isNotEmpty ||
+                  app.followUpDate.isNotEmpty ||
+                  app.doctorNotes.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgCard2,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.medical_information_rounded,
+                          size: 16,
+                          color: AppTheme.primaryLight,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Medical Record',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  color: AppTheme.primaryLight,
+                                ),
+                              ),
+                              if (app.diagnosis.isNotEmpty)
+                                _recordLine('Diagnosis', app.diagnosis),
+                              if (app.medications.isNotEmpty)
+                                _recordLine('Medicines', app.medications),
+                              if (app.followUpDate.isNotEmpty)
+                                _recordLine('Follow-up', app.followUpDate),
+                              if (app.doctorNotes.isNotEmpty)
+                                _recordLine('Notes', app.doctorNotes),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -897,7 +946,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               children: [
                 TextButton.icon(
                   onPressed: () => _showAppointmentPass(app),
-                  icon: Icon(Icons.qr_code_rounded, size: 16, color: AppTheme.primaryLight),
+                  icon: const Icon(Icons.qr_code_rounded, size: 16, color: AppTheme.primaryLight),
                   label: Text(
                     'View Pass',
                     style: GoogleFonts.poppins(
@@ -908,6 +957,42 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   ),
                 ),
                 const Spacer(),
+                if (app.status.toLowerCase() == 'pending' || app.status.toLowerCase() == 'confirmed') ...[
+                  TextButton.icon(
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: AppTheme.bgCard,
+                          title: Text('Cancel Appointment?', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                          content: Text('Are you sure you want to cancel your appointment with ${app.doctorName}?', style: GoogleFonts.poppins(color: AppTheme.textSecondary)),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+                              child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await DataService.updateAppointmentStatus(app.id, 'Cancelled');
+                        await _loadAppointments();
+                      }
+                    },
+                    icon: const Icon(Icons.cancel_outlined, size: 15, color: AppTheme.danger),
+                    label: Text(
+                      'Cancel',
+                      style: GoogleFonts.poppins(
+                        color: AppTheme.danger,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
                 if (app.status.toLowerCase() == 'confirmed') ...[
                   TextButton.icon(
                     onPressed: () => _showRescheduleDialog(app),
@@ -933,6 +1018,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _recordLine(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Text(
+        '$label: $value',
+        style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textPrimary),
       ),
     );
   }

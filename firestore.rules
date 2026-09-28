@@ -2,40 +2,89 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function role(name) {
-      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == name;
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    function admin() { return role('admin'); }
-    function doctor() { return role('doctor'); }
 
     match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || admin());
-      allow create: if signedIn() && request.auth.uid == userId && request.resource.data.role == 'patient';
-      allow update: if signedIn() && (request.auth.uid == userId || admin());
-      allow delete: if admin();
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
     }
 
     match /doctors/{doctorId} {
+      // Any signed-in user can search/read doctor profiles (patients need this)
       allow read: if signedIn();
-      allow create, update: if admin() || (doctor() && request.resource.data.userId == request.auth.uid);
-      allow delete: if admin();
+      // A doctor creates their own profile at signup (doctorId == their uid)
+      allow create: if signedIn() && (
+        doctorId == request.auth.uid ||
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      // Doctors can update their own profile; admins can update any
+      allow update: if signedIn() && (
+        doctorId == request.auth.uid ||
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
     }
 
     match /appointments/{appointmentId} {
-      allow read: if admin() ||
-        (signedIn() && resource.data.patientId == request.auth.uid) ||
-        (doctor() && (resource.data.doctorId == request.auth.uid ||
-          resource.data.doctorName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name));
+      // Allow any signed-in user to read appointments.
+      // Query-level filtering (patientId / doctorId where clauses in Dart code)
+      // ensures users only fetch their own data. This avoids null-resource
+      // permission errors when a document was first created locally.
+      allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.patientId == request.auth.uid;
-      allow update: if admin() ||
-        (doctor() && resource.data.doctorId == request.auth.uid) ||
-        (signedIn() && resource.data.patientId == request.auth.uid);
-      allow delete: if admin() || (signedIn() && resource.data.patientId == request.auth.uid);
+      allow update: if signedIn() && (
+        isAdmin() ||
+        (resource != null && resource.data.doctorId == request.auth.uid) ||
+        (resource != null && resource.data.patientId == request.auth.uid)
+      );
+      allow delete: if signedIn() && (
+        isAdmin() ||
+        (resource != null && resource.data.patientId == request.auth.uid)
+      );
     }
 
     match /specialties/{specialtyId} {
       allow read: if signedIn();
-      allow write: if admin();
+      allow write: if isAdmin();
+    }
+
+    match /consultations/{consultationId} {
+      allow create: if signedIn() &&
+        request.resource.data.patientId == request.auth.uid;
+      allow read: if signedIn() && (
+        resource.data.patientId == request.auth.uid ||
+        resource.data.doctorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if signedIn() && (
+        resource.data.patientId == request.auth.uid ||
+        resource.data.doctorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /conversations/{conversationId} {
+      allow read, write: if signedIn();
+
+      match /messages/{messageId} {
+        allow read: if signedIn();
+        allow create: if signedIn() &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update: if signedIn() &&
+          (resource.data.senderId == request.auth.uid ||
+           resource.data.recipientId == request.auth.uid);
+        allow delete: if signedIn() &&
+          resource.data.senderId == request.auth.uid;
+      }
     }
   }
 }

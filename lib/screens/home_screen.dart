@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../models/doctor_model.dart';
@@ -11,7 +10,6 @@ import '../services/data_service.dart';
 import 'doctor_detail_screen.dart';
 import 'appointments_screen.dart';
 import 'health_hub_screen.dart';
-import 'online_consultation_screen.dart';
 import 'search_by_condition_screen.dart';
 import 'login_screen.dart';
 
@@ -85,7 +83,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _loadUserData();
-    DataService.seedDoctorsToFirestore();
 
     _fadeController = AnimationController(
       vsync: this,
@@ -145,9 +142,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   String get _greeting {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning ☀️';
-    if (hour < 17) return 'Good Afternoon 🌤️';
-    return 'Good Evening 🌙';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   }
 
   void _showNotificationsSheet() {
@@ -434,20 +431,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Stream<List<Doctor>> _doctorsStream() {
-    return FirebaseFirestore.instance.collection('doctors').snapshots().map((
-      QuerySnapshot<Map<String, dynamic>> snapshot,
-    ) {
-      if (snapshot.docs.isEmpty) {
-        DataService.seedDoctorsToFirestore();
-        return DataService.defaultDoctors;
-      }
-
-      return snapshot.docs.map<Doctor>((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return Doctor.fromMap(data);
-      }).toList();
-    });
+    return DataService.getDoctorsStream();
   }
 
   List<Doctor> _filteredDoctors(List<Doctor> doctors) {
@@ -674,7 +658,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           );
         }
 
-        final allDoctors = snapshot.data ?? DataService.defaultDoctors;
+        final allDoctors = snapshot.data ?? const <Doctor>[];
         final doctors = _filteredDoctors(allDoctors);
 
         return CustomScrollView(
@@ -701,17 +685,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     _buildHealthTipsCarousel(),
                     const SizedBox(height: 20),
 
-                    // Consult Online Now Banner
-                    _buildOnlineConsultationBanner(),
-                    const SizedBox(height: 20),
-
                     // Search by Condition Section
                     _buildSearchByConditionBanner(),
                     const SizedBox(height: 20),
 
                     // Doctors Online Now
-                    _buildDoctorsOnlineNow(),
-                    const SizedBox(height: 22),
+                    _buildDoctorsOnlineNow(allDoctors),
+                    if (allDoctors.isNotEmpty) const SizedBox(height: 22),
 
                     // Specialty Categories Title
                     Row(
@@ -970,10 +950,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 icon: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.bgCard2,
-                                    borderRadius: BorderRadius.circular(12),
+                                    color: AppTheme.primary.withValues(alpha: 0.22),
+                                    shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: AppTheme.borderSubtle,
+                                      color: AppTheme.primaryLight.withValues(alpha: 0.55),
                                     ),
                                   ),
                                   child: _isCapturingPhoto
@@ -985,9 +965,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                           ),
                                         )
                                       : const Icon(
-                                          Icons.camera_alt_outlined,
-                                          color: Colors.white,
-                                          size: 20,
+                                          Icons.photo_camera_rounded,
+                                          color: AppTheme.primaryLight,
+                                          size: 19,
                                         ),
                                 ),
                               ),
@@ -998,24 +978,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.bgCard2,
-                                        borderRadius: BorderRadius.circular(12),
+                                        color: AppTheme.secondary.withValues(alpha: 0.22),
+                                        shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: AppTheme.borderSubtle,
+                                          color: AppTheme.secondary.withValues(alpha: 0.65),
                                         ),
                                       ),
                                       child: const Icon(
-                                        Icons.notifications_outlined,
-                                        color: Colors.white,
-                                        size: 20,
+                                          Icons.notifications_active_rounded,
+                                          color: AppTheme.secondary,
+                                          size: 19,
                                       ),
                                     ),
                                     Positioned(
                                       right: 4,
                                       top: 4,
                                       child: Container(
-                                        width: 8,
-                                        height: 8,
+                                        width: 9,
+                                        height: 9,
                                         decoration: const BoxDecoration(
                                           color: AppTheme.accent,
                                           shape: BoxShape.circle,
@@ -1371,87 +1351,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildOnlineConsultationBanner() {
-    return GestureDetector(
-      onTap: () {
-        // For demo, select first doctor
-        final doctor = DataService.defaultDoctors.first;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OnlineConsultationScreen(doctor: doctor),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primary.withValues(alpha: 0.9),
-              AppTheme.primary.withValues(alpha: 0.7),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.video_call_rounded,
-                color: Colors.white,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Consult Online Now 📹',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Video, voice, or chat consultation',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white.withValues(alpha: 0.7),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSearchByConditionBanner() {
     return GestureDetector(
       onTap: () {
@@ -1467,17 +1366,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: AppTheme.bgCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.warning.withOpacity(0.15),
+                color: AppTheme.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.medical_information_rounded,
                 color: AppTheme.warning,
                 size: 24,
@@ -1489,7 +1388,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Search by Condition 🔍',
+                    'Search by Condition',
                     style: GoogleFonts.poppins(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -1518,8 +1417,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildDoctorsOnlineNow() {
-    final onlineDoctors = DataService.defaultDoctors.take(3).toList();
+  Widget _buildDoctorsOnlineNow(List<Doctor> allDoctors) {
+    if (allDoctors.isEmpty) return const SizedBox.shrink();
+    final onlineDoctors = allDoctors.take(4).toList();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1552,11 +1452,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 100,
+          height: 124,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: onlineDoctors.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final doctor = onlineDoctors[index];
               return GestureDetector(
@@ -1574,25 +1474,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     color: AppTheme.bgCard,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppTheme.success.withOpacity(0.3),
+                      color: AppTheme.success.withValues(alpha: 0.3),
                     ),
                   ),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   child: Column(
                     children: [
                       Stack(
                         children: [
                           Container(
-                            width: 48,
-                            height: 48,
+                            width: 46,
+                            height: 46,
                             decoration: BoxDecoration(
                               gradient: AppTheme.primaryGradient,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
-                              child: Text(
-                                doctor.imageEmoji,
-                                style: const TextStyle(fontSize: 24),
+                              child: Icon(
+                                doctor.genderIcon,
+                                color: Colors.white,
+                                size: 30,
                               ),
                             ),
                           ),
@@ -1616,14 +1517,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       Text(
                         doctor.name.split(' ').last,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
-                          fontSize: 11,
+                          fontSize: 12,
                           color: AppTheme.textPrimary,
                         ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
@@ -1737,9 +1639,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ),
                       ),
                       child: Center(
-                        child: Text(
-                          doc.imageEmoji,
-                          style: const TextStyle(fontSize: 32),
+                        child: Icon(
+                          doc.genderIcon,
+                          color: Colors.white,
+                          size: 38,
                         ),
                       ),
                     ),

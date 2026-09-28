@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../models/doctor_model.dart';
 import 'booking_screen.dart';
-import 'online_consultation_screen.dart';
 import 'chat_screen.dart';
 
 class DoctorDetailScreen extends StatefulWidget {
@@ -176,9 +175,10 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen>
                         ),
                       ),
                       child: Center(
-                        child: Text(
-                          widget.doctor.imageEmoji,
-                          style: const TextStyle(fontSize: 48),
+                        child: Icon(
+                          widget.doctor.genderIcon,
+                          color: Colors.white,
+                          size: 58,
                         ),
                       ),
                     ),
@@ -230,13 +230,13 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen>
   Widget _buildStatsRow() {
     return Row(
       children: [
-        _statCard('⭐', '${widget.doctor.rating}', 'Rating', AppTheme.warning),
+        _statCard('Rating', '${widget.doctor.rating}', 'Rating', AppTheme.warning),
         const SizedBox(width: 10),
-        _statCard('👨‍⚕️', widget.doctor.experience, 'Experience', AppTheme.accent),
+        _statCard('Experience', widget.doctor.experience, 'Experience', AppTheme.accent),
         const SizedBox(width: 10),
-        _statCard('👥', widget.doctor.patientsCount, 'Patients', AppTheme.primaryLight),
+        _statCard('Patients', widget.doctor.patientsCount, 'Patients', AppTheme.primaryLight),
         const SizedBox(width: 10),
-        _statCard('💬', '${widget.doctor.reviewsCount}', 'Reviews', AppTheme.purple),
+        _statCard('Reviews', '${widget.doctor.reviewsCount}', 'Reviews', AppTheme.purple),
       ],
     );
   }
@@ -659,38 +659,6 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen>
                         '💬 Chat',
                         style: GoogleFonts.poppins(
                           color: AppTheme.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Online Consultation Button
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            OnlineConsultationScreen(doctor: widget.doctor),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '📹 Online',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),

@@ -13,70 +13,70 @@ class AppTheme {
 
   // ─── Brand Colors ───────────────────────────────────────────────────────────
   // Modern Healthcare Color Palette
-  static const Color primary = Color(0xFF1E88E5);        // Modern Blue
-  static const Color primaryDark = Color(0xFF1565C0);     // Deep Blue
-  static const Color primaryLight = Color(0xFF42A5F5);    // Light Blue
-  static const Color secondary = Color(0xFF7C4DFF);       // Vibrant Purple
-  static const Color accent = Color(0xFF00BCD4);         // Cyan
-  static const Color success = Color(0xFF26A69A);        // Teal Green
-  static const Color warning = Color(0xFFFF6F00);        // Deep Orange
-  static const Color danger = Color(0xFFE53935);         // Red
-  static const Color purple = Color(0xFF9C27B0);         // Purple
-  static const Color pink = Color(0xFFEC407A);           // Hot Pink
+  static const Color primary = Color(0xFF0F766E);        // Deep teal
+  static const Color primaryDark = Color(0xFF115E59);    // Forest teal
+  static const Color primaryLight = Color(0xFF14B8A6);   // Fresh mint
+  static const Color secondary = Color(0xFFF97316);      // Warm coral
+  static const Color accent = Color(0xFFF59E0B);         // Amber
+  static const Color success = Color(0xFF16A34A);        // Green
+  static const Color warning = Color(0xFFEA580C);        // Orange
+  static const Color danger = Color(0xFFDC2626);         // Red
+  static const Color purple = Color(0xFF6366F1);         // Indigo accent
+  static const Color pink = Color(0xFFEC4899);            // Pink accent
 
   // ─── Theme-aware Backgrounds, Surfaces & Text ───────────────────────────────
   static bool get isDark => themeMode.value == ThemeMode.dark;
-  static Color get bgDark => isDark ? const Color(0xFF0A0E27) : const Color(0xFFF0F4FF);
-  static Color get bgDarker => isDark ? const Color(0xFF050812) : const Color(0xFFE3EBFF);
-  static Color get bgCard => isDark ? const Color(0xFF0F1729) : Colors.white;
-  static Color get bgCard2 => isDark ? const Color(0xFF1A2847) : const Color(0xFFF5F8FF);
-  static Color get bgCardGlass => isDark ? const Color(0xDD0F1729) : const Color(0xF7FFFFFF);
-  static Color get borderLight => isDark ? const Color(0xFF2A3F5F) : const Color(0xFFD0DDF0);
-  static Color get borderSubtle => isDark ? const Color(0xFF1E2E48) : const Color(0xFFDEE8F5);
-  static Color get textPrimary => isDark ? const Color(0xFFF8FAFF) : const Color(0xFF0D1B3D);
-  static Color get textSecondary => isDark ? const Color(0xFF9CB3D1) : const Color(0xFF445A7F);
-  static Color get textMuted => isDark ? const Color(0xFF6B8AC4) : const Color(0xFF7A92B3);
-  static Color get divider => isDark ? const Color(0xFF1C2D44) : const Color(0xFFD5DEF0);
+  static Color get bgDark => isDark ? const Color(0xFF09201F) : const Color(0xFFF2FAF8);
+  static Color get bgDarker => isDark ? const Color(0xFF061413) : const Color(0xFFDCEFEA);
+  static Color get bgCard => isDark ? const Color(0xFF102B29) : Colors.white;
+  static Color get bgCard2 => isDark ? const Color(0xFF173A37) : const Color(0xFFEAF6F3);
+  static Color get bgCardGlass => isDark ? const Color(0xE6102B29) : const Color(0xF5FFFFFF);
+  static Color get borderLight => isDark ? const Color(0xFF347A70) : const Color(0xFF8ED3C7);
+  static Color get borderSubtle => isDark ? const Color(0xFF286057) : const Color(0xFFBFE6DD);
+  static Color get textPrimary => isDark ? const Color(0xFFF1FFFC) : const Color(0xFF123532);
+  static Color get textSecondary => isDark ? const Color(0xFFA7D2C9) : const Color(0xFF486F69);
+  static Color get textMuted => isDark ? const Color(0xFF78A9A0) : const Color(0xFF72938E);
+  static Color get divider => isDark ? const Color(0xFF24504A) : const Color(0xFFC9E4DE);
 
   // ─── Gradients ──────────────────────────────────────────────────────────────
   static LinearGradient get primaryGradient => const LinearGradient(
-        colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
+        colors: [Color(0xFF14B8A6), Color(0xFF0F766E)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
 
   static LinearGradient get accentGradient => const LinearGradient(
-        colors: [Color(0xFF00BCD4), Color(0xFF1E88E5)],
+        colors: [Color(0xFFF59E0B), Color(0xFFF97316)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
 
   static LinearGradient get purpleGradient => const LinearGradient(
-        colors: [Color(0xFF9C27B0), Color(0xFF7C4DFF)],
+        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
 
   static LinearGradient get successGradient => const LinearGradient(
-        colors: [Color(0xFF26A69A), Color(0xFF009688)],
+        colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
 
   static LinearGradient get dangerGradient => const LinearGradient(
-        colors: [Color(0xFFE53935), Color(0xFFC62828)],
+        colors: [Color(0xFFEF4444), Color(0xFFB91C1C)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
 
   static LinearGradient get warningGradient => const LinearGradient(
-        colors: [Color(0xFFFF6F00), Color(0xFFE65100)],
+        colors: [Color(0xFFFBBF24), Color(0xFFEA580C)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
 
   static LinearGradient get darkGradient => const LinearGradient(
-        colors: [Color(0xFFE3EBFF), Color(0xFFF0F4FF)],
+        colors: [Color(0xFFDCEFEA), Color(0xFFF2FAF8)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
@@ -93,9 +93,9 @@ class AppTheme {
   // Premium Multi-color Gradient
   static LinearGradient get premiumGradient => const LinearGradient(
         colors: [
-          Color(0xFF1E88E5),
-          Color(0xFF7C4DFF),
-          Color(0xFF00BCD4),
+          Color(0xFF0F766E),
+          Color(0xFFF97316),
+          Color(0xFFF59E0B),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -115,19 +115,19 @@ class AppTheme {
       gradient: gradient,
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
-        color: borderColor ?? borderLight.withValues(alpha: 0.7),
+        color: borderColor ?? primaryLight.withValues(alpha: 0.38),
         width: 1.2,
       ),
       boxShadow: shadows ??
           [
             BoxShadow(
-              color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
+              color: primary.withValues(alpha: 0.16),
               blurRadius: 20,
               offset: const Offset(0, 8),
               spreadRadius: 2,
             ),
             BoxShadow(
-              color: const Color(0xFF7C4DFF).withValues(alpha: 0.06),
+              color: secondary.withValues(alpha: 0.10),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -205,13 +205,13 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    const background = Color(0xFF0A0E27);
-    const surface = Color(0xFF0F1729);
-    const surfaceVariant = Color(0xFF1A2847);
-    const subtleBorder = Color(0xFF1E2E48);
-    const primaryText = Color(0xFFF8FAFF);
-    const secondaryText = Color(0xFF9CB3D1);
-    const mutedText = Color(0xFF6B8AC4);
+    const background = Color(0xFF09201F);
+    const surface = Color(0xFF102B29);
+    const surfaceVariant = Color(0xFF173A37);
+    const subtleBorder = Color(0xFF286057);
+    const primaryText = Color(0xFFF1FFFC);
+    const secondaryText = Color(0xFFA7D2C9);
+    const mutedText = Color(0xFF78A9A0);
 
     return ThemeData(
       useMaterial3: true,
@@ -280,3 +280,4 @@ class AppTheme {
     );
   }
 }
+

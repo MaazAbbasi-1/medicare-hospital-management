@@ -7,6 +7,9 @@ import '../models/doctor_model.dart';
 import '../models/consultation_model.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'ai_chat_screen.dart';
+import 'voice_call_screen.dart';
+import 'video_call_screen.dart';
 
 class OnlineConsultationScreen extends StatefulWidget {
   final Doctor doctor;
@@ -29,9 +32,9 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
 
   final List<int> _durationOptions = [15, 30, 45, 60];
   final List<String> _consultationTypes = [
-    'Video Call 📹',
-    'Voice Call 🎙️',
-    'Chat 💬'
+    'Video Call',
+    'Voice Call',
+    'Chat'
   ];
 
   @override
@@ -42,6 +45,14 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
 
   Future<void> _bookConsultation() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final user = AuthService.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in before booking a consultation.')),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -58,7 +69,7 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
       doctorId: widget.doctor.id,
       doctorName: widget.doctor.name,
       doctorSpecialization: widget.doctor.specialization,
-      patientId: AuthService.currentUser?.uid ?? '',
+      patientId: user.uid,
       patientName: await AuthService.getUserName(),
       status: 'scheduled',
       consultationType: _consultationType,
@@ -77,19 +88,26 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
           .doc(consultation.id)
           .set(consultation.toMap());
 
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
 
       if (mounted) {
         _showSuccessDialog(consultation);
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text(_friendlyFirestoreError(e))),
         );
       }
     }
+  }
+
+  String _friendlyFirestoreError(Object error) {
+    if (error is FirebaseException && error.code == 'permission-denied') {
+      return 'Firebase rejected this booking. Please sign in again and try once more.';
+    }
+    return 'Unable to book consultation. Please check your connection and try again.';
   }
 
   void _showSuccessDialog(OnlineConsultation consultation) {
@@ -98,7 +116,7 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text(
-          'Consultation Scheduled! ✓',
+          'Consultation Scheduled!',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         content: Column(
@@ -123,7 +141,7 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
+                color: AppTheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -138,12 +156,40 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              _openConsultationRoom(consultation);
+            },
             child: const Text('OK'),
           ),
         ],
       ),
     );
+  }
+
+  void _openConsultationRoom(OnlineConsultation consultation) {
+    final Widget screen;
+    switch (consultation.consultationType) {
+      case 'voice':
+        screen = VoiceCallScreen(
+          doctorName: consultation.doctorName,
+          roomId: consultation.roomId,
+        );
+        break;
+      case 'chat':
+        screen = AiChatScreen(
+          doctorName: consultation.doctorName,
+          problem: consultation.problem,
+        );
+        break;
+      case 'video':
+      default:
+        screen = VideoCallScreen(
+          doctorName: consultation.doctorName,
+          roomId: consultation.roomId,
+        );
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
   @override
@@ -167,9 +213,10 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Text(
-                      widget.doctor.imageEmoji,
-                      style: const TextStyle(fontSize: 48),
+                    Icon(
+                      widget.doctor.genderIcon,
+                      color: Colors.white,
+                      size: 58,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -354,7 +401,7 @@ class _OnlineConsultationScreenState extends State<OnlineConsultationScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
-              value: _durationMinutes,
+              initialValue: _durationMinutes,
               onChanged: (value) {
                 if (value != null) {
                   setState(() => _durationMinutes = value);

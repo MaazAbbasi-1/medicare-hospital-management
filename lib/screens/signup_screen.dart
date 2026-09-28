@@ -19,6 +19,26 @@ class _SignupScreenState extends State<SignupScreen>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _qualificationController = TextEditingController(text: 'MBBS, FCPS');
+  final _experienceController = TextEditingController(text: '5+ Years');
+  final _feeController = TextEditingController(text: '1500');
+  final _locationController = TextEditingController(text: 'MediCare Central Hospital, Islamabad - OPD Block A');
+
+  String _selectedRole = 'patient'; // 'patient' or 'doctor'
+  String _selectedSpecialty = 'General Physician';
+  String _selectedGender = 'male';
+  final List<String> _specialties = [
+    'General Physician',
+    'Cardiologist',
+    'Neurologist',
+    'Pediatrician',
+    'Dermatologist',
+    'Orthopedic',
+    'Psychiatrist',
+    'ENT Specialist',
+    'Gynecologist',
+    'Ophthalmologist',
+  ];
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -54,6 +74,10 @@ class _SignupScreenState extends State<SignupScreen>
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _qualificationController.dispose();
+    _experienceController.dispose();
+    _feeController.dispose();
+    _locationController.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -81,11 +105,19 @@ class _SignupScreenState extends State<SignupScreen>
     setState(() => _isLoading = true);
 
     try {
+      final feeParsed = int.tryParse(_feeController.text.trim()) ?? 1500;
       await AuthService.signUp(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         phone: _phoneController.text.trim(),
+        role: _selectedRole,
+        specialization: _selectedSpecialty,
+        gender: _selectedGender,
+        qualification: _qualificationController.text.trim(),
+        experience: _experienceController.text.trim(),
+        fee: feeParsed,
+        hospitalLocation: _locationController.text.trim(),
       );
 
       if (!mounted) return;
@@ -102,7 +134,9 @@ class _SignupScreenState extends State<SignupScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Account created successfully! Welcome to MediCare.',
+                  _selectedRole == 'doctor'
+                      ? 'Doctor account created! Welcome to MediCare.'
+                      : 'Account created successfully! Welcome to MediCare.',
                   style: GoogleFonts.poppins(color: Colors.white, fontSize: 13),
                 ),
               ),
@@ -260,17 +294,115 @@ class _SignupScreenState extends State<SignupScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Instant access to premier medical specialists',
+                                'Create an account to book or manage appointments',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   color: AppTheme.textSecondary,
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 18),
+
+                              // Role Selector Tabs (Patient vs Doctor)
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.bgCard2,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: AppTheme.borderSubtle,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() => _selectedRole = 'patient');
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          decoration: BoxDecoration(
+                                            gradient: _selectedRole == 'patient'
+                                                ? AppTheme.primaryGradient
+                                                : null,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.person_rounded,
+                                                size: 18,
+                                                color: _selectedRole == 'patient'
+                                                    ? Colors.white
+                                                    : AppTheme.textSecondary,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Patient',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: _selectedRole == 'patient'
+                                                      ? Colors.white
+                                                      : AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() => _selectedRole = 'doctor');
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          decoration: BoxDecoration(
+                                            gradient: _selectedRole == 'doctor'
+                                                ? AppTheme.primaryGradient
+                                                : null,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.medical_services_rounded,
+                                                size: 18,
+                                                color: _selectedRole == 'doctor'
+                                                    ? Colors.white
+                                                    : AppTheme.textSecondary,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Doctor',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: _selectedRole == 'doctor'
+                                                      ? Colors.white
+                                                      : AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 18),
 
                               // Full Name
                               Text(
-                                'Full Name',
+                                _selectedRole == 'doctor' ? 'Doctor Full Name' : 'Full Name',
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -285,7 +417,7 @@ class _SignupScreenState extends State<SignupScreen>
                                   fontSize: 14,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'e.g. Ali Ahmed',
+                                  hintText: _selectedRole == 'doctor' ? 'e.g. Dr. Asad Malik' : 'e.g. Ali Ahmed',
                                   prefixIcon: Icon(
                                     Icons.person_outline_rounded,
                                     color: AppTheme.textMuted,
@@ -299,6 +431,220 @@ class _SignupScreenState extends State<SignupScreen>
                                   return null;
                                 },
                               ),
+
+                              if (_selectedRole == 'doctor') ...[
+                                const SizedBox(height: 14),
+
+                                // Specialization Dropdown
+                                Text(
+                                  'Specialization',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                DropdownButtonFormField<String>(
+                                  initialValue: _selectedSpecialty,
+                                  dropdownColor: AppTheme.bgCard,
+                                  style: GoogleFonts.poppins(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 14,
+                                  ),
+                                  decoration: InputDecoration(
+                                    prefixIcon: Icon(
+                                      Icons.category_outlined,
+                                      color: AppTheme.textMuted,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  items: _specialties.map((s) {
+                                    return DropdownMenuItem(
+                                      value: s,
+                                      child: Text(s),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() => _selectedSpecialty = val);
+                                    }
+                                  },
+                                ),
+
+                                const SizedBox(height: 14),
+
+                                DropdownButtonFormField<String>(
+                                  initialValue: _selectedGender,
+                                  dropdownColor: AppTheme.bgCard,
+                                  style: GoogleFonts.poppins(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 14,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Gender',
+                                    prefixIcon: Icon(Icons.wc_outlined),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(value: 'male', child: Text('Male')),
+                                    DropdownMenuItem(value: 'female', child: Text('Female')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) setState(() => _selectedGender = val);
+                                  },
+                                ),
+
+                                const SizedBox(height: 14),
+
+                                // Qualification & Experience Row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Qualification',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          TextFormField(
+                                            controller: _qualificationController,
+                                            style: GoogleFonts.poppins(
+                                              color: AppTheme.textPrimary,
+                                              fontSize: 14,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: 'MBBS, FCPS',
+                                              prefixIcon: Icon(
+                                                Icons.school_outlined,
+                                                color: AppTheme.textMuted,
+                                                size: 20,
+                                              ),
+                                            ),
+                                            validator: (val) {
+                                              if (_selectedRole == 'doctor' && (val == null || val.trim().isEmpty)) {
+                                                return 'Required';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Experience',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          TextFormField(
+                                            controller: _experienceController,
+                                            style: GoogleFonts.poppins(
+                                              color: AppTheme.textPrimary,
+                                              fontSize: 14,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: 'e.g. 8+ Years',
+                                              prefixIcon: Icon(
+                                                Icons.work_history_outlined,
+                                                color: AppTheme.textMuted,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 14),
+
+                                // Consultation Fee & Location Row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Fee (PKR)',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          TextFormField(
+                                            controller: _feeController,
+                                            keyboardType: TextInputType.number,
+                                            style: GoogleFonts.poppins(
+                                              color: AppTheme.textPrimary,
+                                              fontSize: 14,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: '1500',
+                                              prefixIcon: Icon(
+                                                Icons.payments_outlined,
+                                                color: AppTheme.textMuted,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      flex: 3,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Clinic / Room',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          TextFormField(
+                                            controller: _locationController,
+                                            style: GoogleFonts.poppins(
+                                              color: AppTheme.textPrimary,
+                                              fontSize: 14,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: 'MediCare Central Hospital, Islamabad - OPD Block A',
+                                              prefixIcon: Icon(
+                                                Icons.location_on_outlined,
+                                                color: AppTheme.textMuted,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
 
                               const SizedBox(height: 14),
 

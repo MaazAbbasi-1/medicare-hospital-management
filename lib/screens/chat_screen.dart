@@ -55,8 +55,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       // Save to a conversation collection
-      final conversationId =
-          '${_currentUserId}_${widget.recipientId}'.replaceAll('.', '_');
+      final conversationId = '${_currentUserId}_${widget.recipientId}'
+          .replaceAll('.', '_');
 
       await _firestore
           .collection('conversations')
@@ -67,16 +67,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _messageController.clear();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error sending message: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error sending message: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final conversationId =
-        '${_currentUserId}_${widget.recipientId}'.replaceAll('.', '_');
+    final conversationId = '${_currentUserId}_${widget.recipientId}'.replaceAll(
+      '.',
+      '_',
+    );
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -90,10 +92,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Text(
               'Online',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
@@ -119,9 +118,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   return Center(
                     child: Text(
                       'No messages yet. Start a conversation!',
-                      style: GoogleFonts.poppins(
-                        color: AppTheme.textSecondary,
-                      ),
+                      style: GoogleFonts.poppins(color: AppTheme.textSecondary),
                     ),
                   );
                 }
@@ -132,7 +129,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = ChatMessage.fromMap(
-                        messages[index].data() as Map<String, dynamic>);
+                      messages[index].data() as Map<String, dynamic>,
+                    );
                     final isOwn = msg.senderId == _currentUserId;
 
                     return Align(
@@ -182,9 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.grey[300]!),
-              ),
+              border: Border(top: BorderSide(color: Colors.grey[300]!)),
             ),
             child: Row(
               children: [
@@ -206,8 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(width: 8),
                 FloatingActionButton(
                   mini: true,
-                  onPressed: () =>
-                      _sendMessage(_messageController.text),
+                  onPressed: () => _sendMessage(_messageController.text),
                   child: const Icon(Icons.send),
                 ),
               ],

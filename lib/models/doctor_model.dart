@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class DoctorReview {
   final String patientName;
   final double rating;
@@ -37,6 +39,7 @@ class Doctor {
   final String qualification;
   final String specialization;
   final String experience;
+  final String gender;
   final double rating;
   final String availability;
   final String imageEmoji;
@@ -55,17 +58,29 @@ class Doctor {
     required this.qualification,
     required this.specialization,
     required this.experience,
+    this.gender = '',
     required this.rating,
     required this.availability,
     required this.imageEmoji,
     required this.availableSlots,
     required this.fee,
-    this.hospitalLocation = 'MediCare Central, OPD Block A',
+    this.hospitalLocation = 'MediCare Central Hospital, Islamabad - OPD Block A',
     this.aboutBio = '',
     this.patientsCount = '1,200+',
     this.reviewsCount = 120,
     this.reviews = const [],
   });
+
+  IconData get genderIcon {
+    switch (gender) {
+      case 'female':
+        return Icons.woman_rounded;
+      case 'male':
+        return Icons.man_rounded;
+      default:
+        return Icons.medical_services_rounded;
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -75,6 +90,7 @@ class Doctor {
       'qualification': qualification,
       'specialization': specialization,
       'experience': experience,
+      'gender': gender,
       'rating': rating,
       'availability': availability,
       'imageEmoji': imageEmoji,
@@ -106,11 +122,12 @@ class Doctor {
       qualification: map['qualification']?.toString() ?? 'MBBS',
       specialization: map['specialization']?.toString() ?? 'General Physician',
       experience: map['experience']?.toString() ?? '5+ Years',
+      gender: map['gender']?.toString().toLowerCase().trim() ?? '',
       rating: map['rating'] is num
           ? (map['rating'] as num).toDouble()
           : double.tryParse(map['rating']?.toString() ?? '4.8') ?? 4.8,
       availability: map['availability']?.toString() ?? 'Mon - Sat',
-      imageEmoji: map['imageEmoji']?.toString() ?? '👨‍⚕️',
+      imageEmoji: _safeImageLabel(map['imageEmoji']),
       availableSlots: slots.isNotEmpty
           ? slots
           : ['09:00 AM', '11:00 AM', '02:00 PM'],
@@ -119,7 +136,7 @@ class Doctor {
           : int.tryParse(map['fee']?.toString() ?? '1500') ?? 1500,
       hospitalLocation:
           map['hospitalLocation']?.toString() ??
-          'MediCare Central, OPD Block A',
+          'MediCare Central Hospital, Islamabad - OPD Block A',
       aboutBio: map['aboutBio']?.toString() ?? '',
       patientsCount: map['patientsCount']?.toString() ?? '1,200+',
       reviewsCount: map['reviewsCount'] is num
@@ -127,4 +144,11 @@ class Doctor {
           : int.tryParse(map['reviewsCount']?.toString() ?? '120') ?? 120,
     );
   }
+}
+
+String _safeImageLabel(Object? value) {
+  final label = value?.toString() ?? '';
+  return label.isNotEmpty && label.runes.every((rune) => rune <= 0x7F)
+      ? label
+      : 'Doctor';
 }

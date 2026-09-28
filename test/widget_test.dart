@@ -1,8 +1,49 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hospital_management/models/user_model.dart';
 import 'package:hospital_management/models/doctor_model.dart';
+import 'package:hospital_management/models/condition_model.dart';
 
 void main() {
+  test('Condition specialty matcher should handle common aliases and synonyms', () {
+    expect(
+      Condition.matchesDoctorSpecialization(
+        'Gastroenterologist',
+        'Gastroenterologist',
+      ),
+      isTrue,
+    );
+    expect(
+      Condition.matchesDoctorSpecialization(
+        'General Physician',
+        'General Practitioner',
+      ),
+      isTrue,
+    );
+    expect(
+      Condition.matchesDoctorSpecialization(
+        'Eye Specialist',
+        'Ophthalmologist',
+      ),
+      isTrue,
+    );
+    expect(
+      Condition.matchesDoctorSpecialization(
+        'General Surgeon',
+        'Surgeon',
+      ),
+      isTrue,
+    );
+    expect(
+      Condition.matchesDoctorSpecialization(
+        'Cardiologist',
+        'Dermatologist',
+      ),
+      isFalse,
+    );
+  });
+
   test('UserModel serialization and deserialization test', () {
     final user = UserModel(
       uid: 'user123',
@@ -42,5 +83,16 @@ void main() {
     expect(doctor.name, 'Dr. Sarah Khan');
     expect(doctor.availableSlots.length, 2);
     expect(doctor.fee, 1500);
+  });
+
+  test('Consult online feature should be removed from the app UI', () {
+    final homeScreen = File('lib/screens/home_screen.dart').readAsStringSync();
+    final doctorDetailScreen =
+        File('lib/screens/doctor_detail_screen.dart').readAsStringSync();
+
+    expect(homeScreen.contains('Consult Online Now'), isFalse);
+    expect(homeScreen.contains('OnlineConsultationScreen'), isFalse);
+    expect(doctorDetailScreen.contains('📹 Online'), isFalse);
+    expect(doctorDetailScreen.contains('OnlineConsultationScreen'), isFalse);
   });
 }

@@ -32,11 +32,21 @@ class AuthService {
     required String email,
     required String password,
     String phone = '',
+    String role = 'patient',
+    String qualification = '',
+    String specialization = '',
+    String gender = '',
+    String experience = '',
+    int fee = 1500,
+    String hospitalLocation = 'MediCare Central Hospital, Islamabad - OPD Block A',
+    String aboutBio = '',
+    List<String>? availableSlots,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
     final cleanPass = password.trim();
     final cleanName = name.trim();
     final cleanPhone = phone.trim();
+    final cleanRole = _normalizeRole(role);
 
     String uid = '';
     bool firebaseSuccess = false;
@@ -56,12 +66,13 @@ class AuthService {
           await user.updateDisplayName(cleanName);
         } catch (_) {}
 
+        // Step 1: Write the users profile
         final newUser = UserModel(
           uid: user.uid,
           name: cleanName,
           email: cleanEmail,
           phone: cleanPhone,
-          role: 'patient',
+          role: cleanRole,
           createdAt: DateTime.now().toIso8601String(),
         );
 
@@ -70,7 +81,27 @@ class AuthService {
               .collection('users')
               .doc(user.uid)
               .set(newUser.toMap());
-        } catch (_) {}
+        } catch (_) {
+          // Non-fatal: session still cached locally
+        }
+
+        // Step 2: If doctor role, create the searchable doctor profile
+        if (cleanRole == 'doctor') {
+          await _createDoctorProfile(
+            uid: user.uid,
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            qualification: qualification,
+            specialization: specialization,
+            gender: gender,
+            experience: experience,
+            fee: fee,
+            hospitalLocation: hospitalLocation,
+            aboutBio: aboutBio,
+            availableSlots: availableSlots,
+          );
+        }
       }
     } catch (e) {
       if (e is FirebaseAuthException &&
@@ -105,7 +136,11 @@ class AuthService {
         'email': cleanEmail,
         'password': cleanPass,
         'phone': cleanPhone,
-        'role': 'patient',
+        'role': cleanRole,
+        'qualification': qualification,
+        'specialization': specialization,
+        'experience': experience,
+        'fee': fee,
         'createdAt': DateTime.now().toIso8601String(),
       };
       await prefs.setString(_keyLocalUsers, jsonEncode(localUsers));
@@ -117,7 +152,7 @@ class AuthService {
     await prefs.setString(_keyUserName, cleanName);
     await prefs.setString(_keyUserEmail, cleanEmail);
     await prefs.setString(_keyUserPhone, cleanPhone);
-    await prefs.setString(_keyUserRole, 'patient');
+    await prefs.setString(_keyUserRole, cleanRole);
   }
 
   // Sign in with Email & Password
@@ -229,6 +264,80 @@ class AuthService {
     }
   }
 
+  /// Creates the publicly-searchable doctor profile in /doctors/{uid}.
+  /// Called right after Firebase Auth user creation.
+  /// Uses a direct uid-keyed write so Firestore rules (doctorId == request.auth.uid) apply cleanly.
+  static Future<void> _createDoctorProfile({
+    required String uid,
+    required String name,
+    required String email,
+    required String phone,
+    required String qualification,
+    required String specialization,
+    required String gender,
+    required String experience,
+    required int fee,
+    required String hospitalLocation,
+    required String aboutBio,
+    List<String>? availableSlots,
+  }) async {
+    final displayName = name.startsWith('Dr.') ? name : 'Dr. $name';
+    final slots = (availableSlots != null && availableSlots.isNotEmpty)
+        ? availableSlots
+        : ['09:00 AM', '11:00 AM', '02:00 PM', '04:30 PM'];
+
+    final doctorData = {
+      'id': uid,
+      'userId': uid,
+      'name': displayName,
+      'email': email,
+      'phone': phone,
+      'qualification': qualification.isNotEmpty ? qualification : 'MBBS',
+      'specialization': specialization.isNotEmpty ? specialization : 'General Physician',
+      'gender': gender,
+      'experience': experience.isNotEmpty ? experience : '5+ Years',
+      'rating': 4.9,
+      'availability': 'Mon - Sat',
+      'imageEmoji': 'Doctor',
+      'availableSlots': slots,
+      'fee': fee > 0 ? fee : 1500,
+      'hospitalLocation': hospitalLocation.isNotEmpty
+          ? hospitalLocation
+          : 'MediCare Central Hospital, Islamabad - OPD Block A',
+      'aboutBio': aboutBio.isNotEmpty
+          ? aboutBio
+          : '$displayName is an experienced healthcare specialist dedicated to patient wellness.',
+      'patientsCount': '0',
+      'reviewsCount': 0,
+      'isActive': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    // Attempt 1: direct write (works when auth token is fresh)
+    try {
+      await _firestore
+          .collection('doctors')
+          .doc(uid)
+          .set(doctorData, SetOptions(merge: true));
+      return; // success — done
+    } catch (_) {}
+
+    // Attempt 2: short delay then retry (handles token propagation delay)
+    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      await _firestore
+          .collection('doctors')
+          .doc(uid)
+          .set(doctorData, SetOptions(merge: true));
+    } catch (e) {
+      // Both attempts failed — rethrow so the UI can inform the user
+      throw StateError(
+        'Account created but doctor profile could not be saved to the database. '
+        'Please contact support or try again. (${e.toString()})',
+      );
+    }
+  }
+
   static Future<void> _linkDoctorProfile(String name, String uid) async {
     try {
       final matches = await _firestore
@@ -243,6 +352,7 @@ class AuthService {
       }
     } catch (_) {}
   }
+
 
   // Sign out
   static Future<void> signOut() async {

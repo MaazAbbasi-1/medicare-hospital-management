@@ -455,9 +455,10 @@ class _BookingScreenState extends State<BookingScreen>
               border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             ),
             child: Center(
-              child: Text(
-                widget.doctor.imageEmoji,
-                style: const TextStyle(fontSize: 28),
+              child: Icon(
+                widget.doctor.genderIcon,
+                color: Colors.white,
+                size: 36,
               ),
             ),
           ),
